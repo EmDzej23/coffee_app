@@ -1,3 +1,23 @@
 .listItem {
 	cursor:pointer;
 }
+
+.hide-bullets {
+    list-style:none;
+    margin-left: -40px;
+    margin-top:20px;
+}
+
+.thumbnail {
+    padding: 0;
+}
+
+.carousel-inner>.item>img, .carousel-inner>.item>a>img {
+    width: 100%;
+}
+.listItemContainer:HOVER {
+	box-shadow: 0px 2px 10px 3px rgba(0,0,0,0.4);
+}
+#slideshow {
+	height:400px!important;
+}
