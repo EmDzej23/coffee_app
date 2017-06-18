@@ -36,8 +36,9 @@ var FoursquareAPI = function(distance, placesCount, lat, lon, ) {
 			var element = $("<li><div class='fh5co-food-desc listItem'><figure><img src="+img+" class='img-responsive' alt='X'></figure><div><h3>"+places[i].venue.name+"</h3></div></div><div class='fh5co-food-pricing'>Distance: "+places[i].venue.location.distance/1000+"km</div></li>");
 			$("#coffeePlacesList").append(element);
 			$(element).attr("id",places[i].venue.id);
+			$(element).attr("distance",places[i].venue.location.distance);
 			$(element).on("mousedown",function(){
-				postdata($(element).attr("id"));
+				postdata($(this).attr("id")+":"+$(this).attr("distance"));
 			});
 		}
 	}
@@ -55,7 +56,11 @@ var FoursquareAPI = function(distance, placesCount, lat, lon, ) {
 	
 	this.sortPlacesByExpensiveness = function() {
 		this.places.sort(function(a, b){
-			return a.venue.location.distance-b.venue.location.distance;
+			 if (a.venue.price.tier<b.venue.price.tier)
+				return -1;
+			  if (a.venue.price.tier>b.venue.price.tier)
+				return 1;
+			  return 0;
 		});
 		this.displayList();
 	}
@@ -67,6 +72,7 @@ var CoffeePlace = function(id) {
 	this.imagesUrl = "https://api.foursquare.com/v2/venues/"+this.id+"/photos?oauth_token=FM4AMWEDSK1VINMVKDUDYN3IBZ1HDMTJS4W0RKU1IDHAJL2X&v=20170618&limit=10";
 	this.place={};
 	this.photos=[];
+	this.tips=[];
 	this.getCoffeeShop = function() {
 		$.ajax({
 			url: this.url,
@@ -75,8 +81,11 @@ var CoffeePlace = function(id) {
 			complete: function(data){
 				console.log(JSON.parse(data.responseText));
 				this.place = JSON.parse(data.responseText).response.venue;
+				this.tips = this.place.tips.groups[this.place.tips.groups.length-1].items;
 				$("#coffeeTitle").text(this.place.name);
-				
+				$("#priceDetails").text("Price: "+this.place.price.message);
+				$("#distanceDetails").text("Destination: "+window.location.search.split(":")[1]/1000+"km");
+				this.appendTips();
 			},
 			success: function(data){
 				console.log(JSON.parse(data.responseText));
@@ -122,6 +131,18 @@ var CoffeePlace = function(id) {
 		}
 	  
 	}
+	this.appendTips = function() {
+		var tips = this.tips;
+		for (var i = 0;i<tips.length;i++) {
+			if (tips[i].text.toUpperCase.indexOf("COFFEE")>=0) {
+				var img = tips[i].photourl;
+				img = (img==undefined)?"template/images/home_page_background.png":img;
+				var element = $("<li><div class='fh5co-food-desc listItem'><figure><img src="+img+" class='img-responsive' alt='X'></figure><div><h3>"+tips[i].text+"</h3></div></div><div class='fh5co-food-pricing'>Likes: "+tips[i].likes.count+"</div></li>");
+				$("#coffeeTips").append(element);
+				if ($("#coffeeTips").text()!="") $("#coffeeTips").text("");
+			}
+		}
+	}
 }
 var fApi;
 function init() {
@@ -136,8 +157,10 @@ function locationSuccess(position) {
 	fApi = new FoursquareAPI(10000, 10, latitude, longitude);
 	fApi.getAllCoffeeShops();
 	$("#sortDistance").on("mousedown", function(){
-		console.log("gere");
 		fApi.sortPlacesByDistance();
+	});
+	$("#sortPrice").on("mousedown", function(){
+		fApi.sortPlacesByExpensiveness();
 	});
 }
 
@@ -147,9 +170,10 @@ function locationFail() {
 }
 
 function populateDetailsForCoffeePlace() {
-	curretntCoffeePlace = new CoffeePlace(window.location.search.substring(1));
+	curretntCoffeePlace = new CoffeePlace(window.location.search.substring(1).split(":")[0]);
 	curretntCoffeePlace.getCoffeeShop();
 	curretntCoffeePlace.getPhotos();
+	
 }
 
 function loadForm(){
