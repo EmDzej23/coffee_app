@@ -13,6 +13,7 @@ var FoursquareAPI = function(distance, placesCount, lat, lon, ) {
 			context: this,
 			complete: function(data){
 				this.places = JSON.parse(data.responseText).response.groups[0].items;
+				this.sortPlacesByDistance();
 				this.displayList();
 				console.log(JSON.parse(data.responseText).response.groups[0].items);
 			},
@@ -28,22 +29,33 @@ var FoursquareAPI = function(distance, placesCount, lat, lon, ) {
 	}
 	
 	this.displayList = function() {
+		$("#coffeePlacesList").children().remove()
 		var places = this.places;
 		for (var i = 0;i<places.length;i++) {
 			var img = places[i].venue.featuredPhotos.items[0].prefix + places[i].venue.featuredPhotos.items[0].width+"x"+places[i].venue.featuredPhotos.items[0].height+ places[i].venue.featuredPhotos.items[0].suffix;
-			$("#coffeePlacesList").append("<li><div class='fh5co-food-desc'><figure><img src="+img+" class='img-responsive' alt='X'></figure><div><h3>"+places[i].venue.name+"</h3></div></div><div class='fh5co-food-pricing'>Distance: "+places[i].venue.location.distance/1000+"km</div></li>");
+			$("#coffeePlacesList").append("<a href='shop_details.html'><li><div class='fh5co-food-desc listItem'><figure><img src="+img+" class='img-responsive' alt='X'></figure><div><h3>"+places[i].venue.name+"</h3></div></div><div class='fh5co-food-pricing'>Distance: "+places[i].venue.location.distance/1000+"km</div></li></a>");
 		}
 	}
 	
 	this.sortPlacesByDistance = function() {
-		
+		this.places.sort(function(a, b){
+			 if (a.venue.location.distance<b.venue.location.distance)
+				return -1;
+			  if (a.venue.location.distance>b.venue.location.distance)
+				return 1;
+			  return 0;
+		});
+		this.displayList();
 	}
 	
 	this.sortPlacesByExpensiveness = function() {
-		
+		this.places.sort(function(a, b){
+			return a.venue.location.distance-b.venue.location.distance;
+		});
+		this.displayList();
 	}
 }
-
+var curretntCoffeePlace;
 var CoffeePlace = function(name, image, distance) {
 	this.name = name;
 	this.image = image;
@@ -52,7 +64,22 @@ var CoffeePlace = function(name, image, distance) {
 }
 var fApi;
 function init() {
-	fApi = new FoursquareAPI(10000, 10, 44.00, 20.00);
+	navigator.geolocation.getCurrentPosition(locationSuccess, locationFail);
+}
+var latitude;
+var longitude;
+function locationSuccess(position) {
+    latitude = position.coords.latitude;
+	longitude = position.coords.longitude;
+	fApi = new FoursquareAPI(10000, 10, latitude, longitude);
 	fApi.getAllCoffeeShops();
+	$("#sortDistance").on("mousedown", function(){
+		console.log("gere");
+		fApi.sortPlacesByDistance();
+	});
+}
+
+function locationFail() {
+    $('#myModal').modal('show');
 	
 }
