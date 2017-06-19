@@ -23,7 +23,8 @@ var FoursquareAPI = function(distance, placesCount, lat, lon) {
 			},
 			error: function(data) {
 				console.log(data);
-				showModal("Error",data);
+				showModal("Error",data.statusText);
+				$("#loading").remove();
 			}
 		});
 	}
@@ -90,13 +91,14 @@ var CoffeePlace = function(id) {
 				this.place = data.response.venue;
 				this.tips = this.place.tips.groups[this.place.tips.groups.length-1].items;
 				$("#coffeeTitle").text(this.place.name);
-				$("#priceDetails").text("Price: "+this.place.price.message);
+				$("#priceDetails").text("Price: "+this.place.price.message + "("+this.place.price.currency+")");
 				$("#distanceDetails").text("Destination: "+window.location.search.split(":")[1]/1000+"km");
 				this.appendTips();
 			},
 			error: function(data) {
 				console.log(data);
-				showModal("Error",data);
+				showModal("Error",data.statusText);
+				$("#loading").remove();
 			}
 		});
 	}
@@ -111,7 +113,9 @@ var CoffeePlace = function(id) {
 				this.appendToGalery();
 			},
 			error: function(data) {
-				
+				console.log(data);
+				showModal("Error",data.statusText);
+				$("#loading").remove();
 			}
 		});
 	}
